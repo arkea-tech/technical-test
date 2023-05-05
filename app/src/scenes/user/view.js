@@ -8,12 +8,21 @@ import LoadingButton from "../../components/loadingButton";
 import api from "../../services/api";
 
 export default () => {
+  const [units, setUnits] = useState(null);
   const [user, setUser] = useState(null);
   const { id } = useParams();
+
+  function getUnits() {
+    (async () => {
+      const { data } = await api.get("/organization");
+      setUnits(data);
+    })();
+  }
   useEffect(() => {
     (async () => {
       const response = await api.get(`/user/${id}`);
       setUser(response.data);
+      getUnits();
     })();
   }, []);
 
@@ -22,13 +31,13 @@ export default () => {
   return (
     <div>
       <div className="appContainer pt-24">
-        <Detail user={user} />
+        <Detail user={user} units={units} />
       </div>
     </div>
   );
 };
 
-const Detail = ({ user }) => {
+const Detail = ({ user, units}) => {
   const history = useHistory();
 
   async function deleteData() {
@@ -42,6 +51,7 @@ const Detail = ({ user }) => {
   async function handleSubmit(values) {
     try {
       await api.put(`/user/${user._id}`, values);
+      console.log(values)
       toast.success("Updated!");
       history.push(`/user`);
     } catch (e) {
@@ -77,6 +87,16 @@ const Detail = ({ user }) => {
                 <select className="projectsInput text-[14px] font-normal text-[#212325] rounded-[10px]" type="select" name="status" value={values.status || ''} onChange={handleChange}>
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
+                </select>
+              </div>
+              <div className="w-full md:w-[165px] mt-[10px] md:mt-0">
+                <div className="text-[14px] text-[#212325] font-medium	">Organization</div>
+                <select className="projectsInput text-[14px] font-normal text-[#212325] rounded-[10px]" type="select" name="unitId" value={values.unitId || undefined} onChange={handleChange}>
+                  {
+                    units && units.map(unit =>
+                      <option value={unit._id}>{unit.name}</option>
+                    )
+                  }
                 </select>
               </div>
             </div>
