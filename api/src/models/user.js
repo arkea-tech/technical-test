@@ -30,6 +30,8 @@ const Schema = new mongoose.Schema({
   status: { type: String, default: "active" },
   availability: { type: String, default: "available" },
   address: { type: String },
+
+  unitId: { type: String },
 });
 
 Schema.pre("save", function (next) {
