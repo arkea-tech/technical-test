@@ -65,6 +65,7 @@ const Activities = ({ date, user, project }) => {
 
   const days = getDaysInMonth(date.getMonth(), date.getFullYear());
   const onAddActivities = (project) => {
+
     const found = activities.find((a) => a.projectId === project._id);
     if (found) return toast.error(`Project ${project.name} already added !`);
     setActivities([
@@ -97,7 +98,6 @@ const Activities = ({ date, user, project }) => {
     if (window.confirm("Are you sure ?")) {
       const activity = activities[i];
       await api.remove(`/activity/${activity._id}`);
-      toast.success(`Deleted ${activity.project}`);
     }
   }
 

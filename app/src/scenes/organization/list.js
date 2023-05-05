@@ -7,36 +7,27 @@ import LoadingButton from "../../components/loadingButton";
 import api from "../../services/api";
 
 const NewList = () => {
-  const [users, setUsers] = useState(null);
-  const [projects, setProjects] = useState([]);
-  const [usersFiltered, setUsersFiltered] = useState(null);
-  const [filter, setFilter] = useState({ status: "active", availability: "", search: "" });
+  const [units, setUnits] = useState(null);
+  const [unitsFiltered, setUnitsFiltered] = useState(null);
+  const [filter, setFilter] = useState({ search: "" });
 
-  useEffect(() => {
+  function getUnits() {
     (async () => {
-      const { data } = await api.get("/user");
-      setUsers(data);
+      const { data } = await api.get("/organization");
+      setUnits(data);
     })();
-    getProjects();
-  }, []);
-
-  async function getProjects() {
-    const res = await api.get("/project");
-    setProjects(res.data);
   }
 
   useEffect(() => {
-    if (!users) return;
-    setUsersFiltered(
-      users
-        .filter((u) => !filter?.status || u.status === filter?.status)
-        .filter((u) => !filter?.contract || u.contract === filter?.contract)
-        .filter((u) => !filter?.availability || u.availability === filter?.availability)
-        .filter((u) => !filter?.search || u.name.toLowerCase().includes(filter?.search.toLowerCase())),
-    );
-  }, [users, filter]);
+    getUnits();
+  }, []);
 
-  if (!usersFiltered) return <Loader />;
+  useEffect(() => {
+    if (!units) return;
+    setUnitsFiltered(units.filter((u) => !filter?.search || u.name.toLowerCase().includes(filter?.search.toLowerCase())));
+  }, [units, filter]);
+
+  if (!unitsFiltered) return <Loader />;
 
   return (
     <div>
@@ -63,29 +54,28 @@ const NewList = () => {
                 }}
               />
             </div>
-            <SelectAvailability filter={filter} setFilter={setFilter} />
-            <FilterStatus filter={filter} setFilter={setFilter} />
             <div>
               <span className="text-sm font-normal text-gray-500">
-                <span className="text-base font-medium text-gray-700">{usersFiltered.length}</span> of {users.length}
+                <span className="text-base font-medium text-gray-700">{unitsFiltered.length}</span> of {units.length}
               </span>
             </div>
           </div>
-          <Create />
+          <Create getUnits={getUnits} />
         </div>
         <div className="overflow-x-auto">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 py-6 gap-5 ">
-            {usersFiltered.map((hit, idx) => {
-              return <UserCard key={hit._id} idx={idx} hit={hit} projects={projects} />;
+            {unitsFiltered.map((hit, idx) => {
+              return <UnitCard key={hit._id} idx={idx} hit={hit} />;
             })}
           </div>
         </div>
       </div>
     </div>
   );
+  
 };
 
-const Create = () => {
+const Create = ({ getUnits }) => {
   const [open, setOpen] = useState(false);
 
   const history = useHistory();
@@ -94,7 +84,7 @@ const Create = () => {
     <div style={{ marginBottom: 10 }}>
       <div className="text-right">
         <button className="bg-[#0560FD] text-[#fff] py-[12px] px-[22px] w-[170px] h-[48px]	rounded-[10px] text-[16px] font-medium" onClick={() => setOpen(true)}>
-          Create new user
+          Create new unit
         </button>
       </div>
       {open ? (
@@ -108,14 +98,12 @@ const Create = () => {
               initialValues={{}}
               onSubmit={async (values, { setSubmitting }) => {
                 try {
-                  values.status = "active";
-                  values.availability = "not available";
-                  values.role = "ADMIN";
-                  const res = await api.post("/user", values);
+                  const res = await api.post("/organization", values);
                   if (!res.ok) throw res;
                   toast.success("Created!");
                   setOpen(false);
-                  history.push(`/user/${res.data._id}`);
+                  getUnits();
+                  /*history.push(`/organization/${res.data._id}`);*/
                 } catch (e) {
                   console.log(e);
                   toast.error("Some Error!", e.code);
@@ -129,17 +117,6 @@ const Create = () => {
                       <div className="w-full md:w-[48%] mt-2">
                         <div className="text-[14px] text-[#212325] font-medium	">Name</div>
                         <input className="projectsInput text-[14px] font-normal text-[#212325] rounded-[10px]" name="name" value={values.name} onChange={handleChange} />
-                      </div>
-                      <div className="w-full md:w-[48%] mt-2">
-                        <div className="text-[14px] text-[#212325] font-medium	">Email</div>
-                        <input className="projectsInput text-[14px] font-normal text-[#212325] rounded-[10px]" name="email" value={values.email} onChange={handleChange} />
-                      </div>
-                    </div>
-                    <div className="flex justify-between flex-wrap mt-3">
-                      {/* Password */}
-                      <div className="w-full md:w-[48%] mt-2">
-                        <div className="text-[14px] text-[#212325] font-medium	">Password</div>
-                        <input className="projectsInput text-[14px] font-normal text-[#212325] rounded-[10px]" name="password" value={values.password} onChange={handleChange} />
                       </div>
                     </div>
                   </div>
@@ -161,76 +138,18 @@ const Create = () => {
   );
 };
 
-const SelectAvailability = ({ filter, setFilter }) => {
-  return (
-    <div className="flex">
-      <select
-        className="w-[180px] bg-[#FFFFFF] text-[14px] text-[#212325] font-normal py-2 px-[14px] rounded-[10px] border-r-[16px] border-[transparent] cursor-pointer"
-        value={filter.availability}
-        onChange={(e) => setFilter({ ...filter, availability: e.target.value })}>
-        <option disabled>Availability</option>
-        <option value={""}>All availabilities</option>
-        {[
-          { value: "available", label: "Available" },
-
-          { value: "not available", label: "Not Available" },
-        ].map((e) => {
-          return (
-            <option key={e.value} value={e.value} label={e.label}>
-              {e.label}
-            </option>
-          );
-        })}
-      </select>
-    </div>
-  );
-};
-
-const FilterStatus = ({ filter, setFilter }) => {
-  return (
-    <div className="flex">
-      <select
-        className="w-[180px] bg-[#FFFFFF] text-[14px] text-[#212325] font-normal py-2 px-[14px] rounded-[10px] border-r-[16px] border-[transparent] cursor-pointer"
-        value={filter.status}
-        onChange={(e) => setFilter({ ...filter, status: e.target.value })}>
-        <option disabled>Status</option>
-        <option value={""}>All status</option>
-        {[
-          { value: "active", label: "Active" },
-          { value: "inactive", label: "Inactive" },
-        ].map((e) => {
-          return (
-            <option key={e.value} value={e.value} label={e.label}>
-              {e.label}
-            </option>
-          );
-        })}
-      </select>
-    </div>
-  );
-};
-
-const UserCard = ({ hit, projects }) => {
+const UnitCard = ({ hit }) => {
   const history = useHistory();
   return (
     <div
-      onClick={() => history.push(`/user/${hit._id}`)}
+      onClick={() => history.push(`/organization/${hit._id}`)}
       className="flex flex-col bg-white hover:-translate-y-1 transition duration-100 shadow-sm ease-in cursor-pointer  relative rounded-[16px] pb-4 overflow-hidden">
       <div className="relative flex items-start justify-center pt-6 pb-2">
         <div className="absolute top-0 left-0 w-full h-full z-10 overflow-hidden">
-          <img
-            src={hit.banner.startsWith("https://www.gravatar.com/avatar") ? require("../../assets/banner-stud.png") : hit.banner}
-            className="object-cover w-full h-full z-10 opacity-60 overflow-hidden"
-          />
+          <img src={require("../../assets/banner-stud.png")} className="object-cover w-full h-full z-10 opacity-60 overflow-hidden" />
         </div>
         <div className="flex flex-col items-center z-20">
-          <img src={hit.avatar} className="object-contain rounded-full w-20 h-20 " />
-          <div className={`rounded-full py-1 px-3 whitespace-nowrap ${hit.availability === "available" ? "bg-[#2EC735]" : "bg-[#8A8989]"} flex items-center gap-2 -translate-y-2`}>
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="4" cy="4" r="4" fill="white" />
-            </svg>
-            <p className="text-white text-[12px] uppercase tracking-wider">{hit.availability}</p>
-          </div>
+          <img src={require("../../assets/organisation.png")} className="object-contain w-20 h-20" />
         </div>
         <div className="absolute  right-6">
           <svg width="16" height="4" viewBox="0 0 16 4" fill="none" xmlns="http://www.w3.org/2000/svg">

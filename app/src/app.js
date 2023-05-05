@@ -9,6 +9,7 @@ import { setUser } from "./redux/auth/actions";
 import Activity from "./scenes/activity";
 import Auth from "./scenes/auth";
 import Project from "./scenes/project";
+import Organization from "./scenes/organization";
 import User from "./scenes/user";
 
 import Account from "./scenes/account";
@@ -59,6 +60,8 @@ const App = () => {
 
                 <RestrictedRoute path="/account" component={Account} />
                 <RestrictedRoute path="/project" component={Project} />
+
+                <RestrictedRoute path="/organization" component={Organization} />
                 <RestrictedRoute path="/" component={Home} />
               </Switch>
             </main>
