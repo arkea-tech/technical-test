@@ -91,6 +91,7 @@ const Detail = ({ user, units}) => {
               <div className="w-full md:w-[165px] mt-[10px] md:mt-0">
                 <div className="text-[14px] text-[#212325] font-medium	">Organization</div>
                 <select className="projectsInput text-[14px] font-normal text-[#212325] rounded-[10px]" type="select" name="unitId" value={values.unitId || undefined} onChange={handleChange}>
+                  <option disabled selected value> -- select an option -- </option>
                   {
                     units && units.map(unit =>
                       <option value={unit._id}>{unit.name}</option>
